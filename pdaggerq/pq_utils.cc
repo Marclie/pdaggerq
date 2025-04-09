@@ -1702,13 +1702,13 @@ void add_new_string_fermi_vacuum(const std::shared_ptr<pq_string> &in, std::vect
 
         // rearrange strings
 
-//        if ( print_level > 0 ) {
-//            printf("\n");
-//            printf("    ");
-//            printf("// starting string:\n");
-//            mystring->print();
-//            fflush(stdout);
-//        }
+        if ( print_level > 0 ) {
+            printf("\n");
+            printf("    ");
+            printf("// starting string:\n");
+            mystring->print();
+            fflush(stdout);
+        }
 
         std::vector< std::shared_ptr<pq_string> > tmp;
         tmp.push_back(mystring);
@@ -1728,27 +1728,7 @@ void add_new_string_fermi_vacuum(const std::shared_ptr<pq_string> &in, std::vect
                 }
             }
 
-//            printf("\n");
-//            printf("    ");
-//            printf("    // next string:\n");
-//            for (const std::shared_ptr<pq_string> & pq_str : tmp) {
-//                printf("    ");
-//                pq_str->print();
-//            }
-//            fflush(stdout);
-
         }while(!done_rearranging);
-
-        //        if ( print_level > 0 ) {
-//        printf("\n");
-//        printf("    ");
-//        printf("// final strings:\n");
-//        for (const std::shared_ptr<pq_string> & pq_str : tmp) {
-//            pq_str->print();
-//        }
-//        printf("\n");
-//        fflush(stdout);
-//        }
 
         //ordered.clear();
         for (const std::shared_ptr<pq_string> & pq_str : tmp) {
