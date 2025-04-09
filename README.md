@@ -1,6 +1,10 @@
-$p^{\dagger}q$
 
-pdaggerq is a fermionic computer algebra package for bringing strings of creation / annihilation operators to normal
+<div align = "center">
+    <img src="pq_logo.png" height="100px">
+</div>
+
+
+$p^{\dagger}q$ is a fermionic computer algebra package for bringing strings of creation / annihilation operators to normal
 order with respect to a true vacuum or the Fermi vacuum. The code can evaluate expressions like projections that 
 arise in coupled cluster theory and can be used to generate working many-body electronic structure codes. 
 In the examples section we provide worked examples that generate equations and Python code for CCSD, 
@@ -13,21 +17,14 @@ Installing pdaggerq requires cmake is installed on your system. To install, firs
 git clone git@github.com:edeprince3/pdaggerq.git
 ```
 
-Then, you can install like you would a normal python package.  From the package top level directory, run either
+Then, you can install like you would a normal python package.  From the package top level directory, run 
 
 ```
-python setup.py install
+python -m pip install .
 ```
-or 
-```
-pip install .
-```
-which should compile pdaggerq.  These commands will produce `build` and`dist` folders which contain
-the compiled c++ shared library. If you are a developer and make changes to the c++ code the package can 
-be rebuilt by running 
-```
-python setup.py clean; python setup.py install
-```
+
+which should compile pdaggerq.  This command will produce a `build` folder that contains
+the compiled c++ shared library. 
 
 ## Quickstart
 
@@ -181,7 +178,7 @@ a general one-body operator
 ```
 'h' 
 ```
-a general two-body operator
+a general antisymmetrized two-body operator
 ```
 'g' 
 ```    
@@ -313,14 +310,38 @@ add_quadruple_commutator(1.0/24.0, ['f'], ['t2'], ['t1'], ['t1'], ['t1'])
 
 #### add_st_operator: 
 
-set strings corresponding to a similarity transformed operator commutator involving five operators. The first argument
+set strings corresponding to a similarity transformed operator. The first argument
 after the numerical value is a list of operators; the product of these operators will be similarity transformed. The
 next argument is a list of operators appearing as a sum the exponential function. The similarity transformation is
 performed by applying the BCH expansion with four nested commutators.
 
 ```
 add_st_operator(1.0, ['v'],['t1','t2'])
-```    
+```
+
+#### add_bernoulli_operator: 
+
+set strings corresponding to the Bernoulli representation of the similarity transformed operator that is sometimes used
+in unitary coupled-cluster theory. The first argument
+after the numerical value is a list of operators; the product of these operators will be similarity transformed. The
+next argument is a list of operators appearing as a sum the exponential function. The last argument is the order to
+which the expansion is complete. 
+
+```
+add_bernoulli_operator(1.0, ['v'],['t1','t2'], n)
+```
+
+#### set_unitary_cc:
+
+for unitary coupled-cluster, pass a value of "True" to this function to indicate that the cluster operator is antihermitian  
+(i.e., $\hat{T}_n \to \hat{T}_n - \hat{T}_n^\dagger$). Passing a value of "False" will result in the default behavior of 
+the program. Note that care must be taken when evaluating a similarity transformation involving antihermitian cluster 
+operators because (1) the cluster operators do not commute, and (2) the BCH expansion does not truncate.
+
+```
+set_unitary_cc(True)
+```
+
 #### set_print_level: 
 
 Control the amount of output. Any value greater than the default value of 0 will cause the code to print starting

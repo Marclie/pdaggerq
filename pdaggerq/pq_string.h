@@ -84,7 +84,8 @@ template <typename T> int minimum_precision(T factor) {
     return precision;
 }
 
-class pq_string {
+class pq_string 
+{
 
   private:
 
@@ -400,8 +401,9 @@ class pq_string {
      *
      * @param type: the integrals_type
      * @param in: the list of labels for the integrals
+     * @param op_portions: {"A", "N", "R", ...}, "A" = "N" + "R" (used for Bernoulli expansion)
      */
-    void set_integrals(const std::string &type, const std::vector<std::string> &in);
+    void set_integrals(const std::string &type, const std::vector<std::string> &in, std::vector<std::string> op_portions = {});
 
     /**
      *
@@ -412,8 +414,19 @@ class pq_string {
      * @param n_annihilate: the number of labels corresponding to annihilation operators
      * @param n_ph: the number of photons
      * @param in: the list of labels for the amplitudes
+     * @param op_portions: {"A", "N", "R", ...}, "A" = "N" + "R" (used for Bernoulli expansion)
      */
-    void set_amplitudes(char type, int n_create, int n_annihilate, int n_ph, const std::vector<std::string> &in);
+    void set_amplitudes(char type, int n_create, int n_annihilate, int n_ph, const std::vector<std::string> &in, std::vector<std::string> op_portions = {});
+
+    /** 
+     *
+     * how many times does an index appear amplitudes, deltas, and integrals?
+     *
+     * @param idx: the index
+     * @return: the number of times idx appears in the string
+     *
+     */
+    int index_in_anywhere(const std::string &idx);
 
 };
 
