@@ -27,6 +27,7 @@
 #include <iostream>
 #include <memory>
 #include <sstream>
+#include <iomanip>
 
 #include "../include/pq_graph.h"
 #include "../include/term.h"
@@ -64,6 +65,14 @@ namespace pdaggerq {
         } else if (vertex_type_ == 'p') {
             name_ += "[\"";
             name_ += "perm_" + dimstring();
+            name_ += "\"]";
+        } else if (vertex_type_ == 'b') {
+            name_ += "[\"";
+            name_ += "bin_" + dimstring();
+            name_ += "\"]";
+        } else if (vertex_type_ == 'd') {
+            name_ += "[\"";
+            name_ += "bin2_" + dimstring();
             name_ += "\"]";
         }
 
@@ -129,14 +138,16 @@ namespace pdaggerq {
         }
 
         // loop over lines
-        string line_str = "(\"";
+//        string line_str = "(\"";
+        string line_str = "(";
         for (const Line &line : lines) {
             if (!use_trial_index && line.sig_) continue;
             line_str += line.label_;
             line_str += ",";
         }
         line_str.pop_back(); // remove last comma
-        line_str += "\")";
+//        line_str += "\")";
+        line_str += ")";
         return line_str;
     }
 
@@ -166,8 +177,12 @@ namespace pdaggerq {
 
         // use id_ to create a generic name
         string dimstring = this->dimstring();
-        if (id_ >= 0)
-            generic_str += to_string(id_);
+        if (id_ >= 0) {
+            // format the id as a string (%04d)
+            stringstream ss;
+            ss << std::setfill('0') << std::setw(4) << id_;
+            generic_str += ss.str();
+        }
 
         if (!dimstring.empty())
             generic_str += "_" + dimstring;
@@ -249,6 +264,7 @@ namespace pdaggerq {
             }
 
             bool format_dot = is_scalar() && tensors.size() > 1;
+            format_dot = false;
 
             // this is a scalar, so we need to format as a dot product
             if (format_dot) output += "1.00 * dot(";
@@ -282,7 +298,7 @@ namespace pdaggerq {
 
                 if (left_labels != right_labels) {
                     // we need to permute the right to match the left
-                    output += "np.einsum('";
+                    output += "einsum('";
                     output += right_labels + "->" + left_labels + "',";
                 }
                 output += right_->str();
@@ -315,7 +331,7 @@ namespace pdaggerq {
                 output += scalar_str + " * ";
             }
             if (!tensors.empty()) {
-                output += "np.einsum('";
+                output += "einsum('";
                 for (const auto &index: indices)
                     output += index + ",";
                 output.pop_back();

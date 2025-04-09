@@ -256,7 +256,7 @@ namespace pdaggerq {
     void Term::expand_rhs(const VertexPtr &term_link) {
 
         // expand linkage into vector of vertices
-        if (term_link->is_expandable()) {
+        if (term_link->is_expandable(true)) {
             rhs_ = term_link->link_vector();
         } else if (term_link->is_linked() && !term_link->is_temp() && !term_link->is_addition()) {
             rhs_ = {as_link(term_link)->left(), as_link(term_link)->right()};
@@ -502,7 +502,7 @@ namespace pdaggerq {
     }
 
     string Term::make_comments(bool only_flop, bool only_comment) const {
-        if (comments_.empty())
+        if (comments_.empty() || !print_comments_)
             return "";
 
         string comment;

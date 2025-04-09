@@ -1700,10 +1700,7 @@ void add_new_string_fermi_vacuum(const std::shared_ptr<pq_string> &in, std::vect
     // at this point, we've expanded all of the general labels
     // and are ready to bring the strings to normal order
 
-    std::vector< std::shared_ptr<pq_string> > new_strings[mystrings.size()];
-    #pragma omp parallel for schedule(dynamic) default(none) shared(mystrings, new_strings) firstprivate(print_level)
-    for (size_t k = 0; k < mystrings.size(); k++) {
-        const std::shared_ptr<pq_string>& mystring = mystrings[k];
+    for (auto & mystring: mystrings ) {
 
         // check if this string can be fully contracted ...
         int nc = 0;
@@ -1728,13 +1725,14 @@ void add_new_string_fermi_vacuum(const std::shared_ptr<pq_string> &in, std::vect
         }
 
         // rearrange strings
-	//
-        if ( print_level > 0 ) {
-            printf("\n");
-            printf("    ");
-            printf("// starting string:\n");
-            mystring->print();
-        }
+
+//        if ( print_level > 0 ) {
+//            printf("\n");
+//            printf("    ");
+//            printf("// starting string:\n");
+//            mystring->print();
+//            fflush(stdout);
+//        }
 
         std::vector< std::shared_ptr<pq_string> > tmp;
         tmp.push_back(mystring);
@@ -1753,17 +1751,34 @@ void add_new_string_fermi_vacuum(const std::shared_ptr<pq_string> &in, std::vect
                     tmp.push_back(pq_str);
                 }
             }
+
+//            printf("\n");
+//            printf("    ");
+//            printf("    // next string:\n");
+//            for (const std::shared_ptr<pq_string> & pq_str : tmp) {
+//                printf("    ");
+//                pq_str->print();
+//            }
+//            fflush(stdout);
+
         }while(!done_rearranging);
 
-        new_strings[k] = tmp;
-        tmp.clear();
-    }
+        //        if ( print_level > 0 ) {
+//        printf("\n");
+//        printf("    ");
+//        printf("// final strings:\n");
+//        for (const std::shared_ptr<pq_string> & pq_str : tmp) {
+//            pq_str->print();
+//        }
+//        printf("\n");
+//        fflush(stdout);
+//        }
 
-    for (const auto& new_string : new_strings) {
-        if ( new_string.empty() ) continue;
-        for (const std::shared_ptr<pq_string> & pq_str : new_string) {
+        //ordered.clear();
+        for (const std::shared_ptr<pq_string> & pq_str : tmp) {
             ordered.push_back(pq_str);
         }
+        tmp.clear();
     }
 }
 

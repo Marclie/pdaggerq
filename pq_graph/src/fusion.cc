@@ -799,10 +799,7 @@ size_t PQGraph::prune(bool keep_single_use) {
             }
 
             // skip if temp is used more than once
-            if (num_occurrences > 1) continue;
-
-            // skip if temp is used only once and is a scalar or if keep_single_use is enabled
-            if (num_occurrences == 1 && (keep_single_use || temp->is_scalar())) continue;
+            if (num_occurrences >= 1) continue;
 
         }
 

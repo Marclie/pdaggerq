@@ -193,21 +193,38 @@ namespace pdaggerq {
                 den_lines.push_back(line);
         };
 
+        // create external lines.
+        // we need to keep the super and subscripts in order
 
-        // left half
-        for (uint_fast8_t i = 0; i < left_size; ++i) {
-            // skip internal lines, and keep all lines if addition
-            if (!addition_ & !left_ext_idx[i]) continue;
-            add_line(left_lines[i]);
-            mem_scale_ += left_lines[i];
+        // first half of lines
+        uint_fast8_t left_half = left_size - left_size / 2;
+        uint_fast8_t right_half = right_size - right_size / 2;
+
+
+        // left external lines
+        for (uint_fast8_t i = 0; i < left_half; i++) {
+            if (left_ext_idx[i] || addition_) // if external or addition, add line
+                add_line(left_lines[i]);
         }
 
-        // right half
-        for (uint_fast8_t i = 0; i < right_size; ++i) {
-            // skip internal lines, and keep all lines if addition
-            if (!right_ext_idx[i]) continue;
-            add_line(right_lines[i]);
-            mem_scale_ += right_lines[i];
+        // right external lines
+        for (uint_fast8_t i = 0; i < right_half; i++) {
+            if (right_ext_idx[i]) // if external or addition, add line
+                add_line(right_lines[i]);
+        }
+
+        // second half of lines
+
+        // left external lines
+        for (uint_fast8_t i = left_half; i < left_size; i++) {
+            if (left_ext_idx[i] || addition_) // if external or addition, add line
+                add_line(left_lines[i]);
+        }
+
+        // right external lines
+        for (uint_fast8_t i = right_half; i < right_size; i++) {
+            if (right_ext_idx[i]) // if external or addition, add line
+                add_line(right_lines[i]);
         }
 
         // add sigma lines to the beginning of lines_

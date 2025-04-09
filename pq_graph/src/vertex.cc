@@ -475,16 +475,23 @@ namespace pdaggerq {
         return swap_sign_best; // return sign change
     }
 
-    void Vertex::sort(line_vector &lines) {
+    void Vertex::sort(line_vector &lines, bool ignore_pairs) {
         if (lines.empty()) return; // do nothing if rank is zero
 
         // sort lines by occ/vir status (virs on left, occ on right); sort lines by blocks for same occ/vir (alpha on left, beta on right).
         // if all these are equal, sort by ASCII ordering of line name
-        std::sort(lines.begin(), lines.end(), std::less<>());
+        if (ignore_pairs)
+            std::sort(lines.begin(), lines.end(), std::less<>());
+        else {
+            // sort first half and second half separately (note: odd ranks have more in first half. TODO: not always ideal)
+            size_t half = lines.size() - lines.size() / 2;
+            std::sort(lines.begin(), lines.begin() + half, std::less<>());
+            std::sort(lines.begin() + half, lines.end(), std::less<>());
+        }
     }
 
     void Vertex::sort() {
-        sort(lines_);
+        sort(lines_, false);
         update_lines(lines_); // set lines
     }
 

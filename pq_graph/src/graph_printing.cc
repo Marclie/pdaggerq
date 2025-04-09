@@ -107,16 +107,45 @@ namespace pdaggerq {
         // get all terms from all equations except the scalars, and reuse_tmps
         vector<Term> all_terms;
 
+        // make set of all unique base names (ignore linkages and scalars)
+        set<string> names;
+
         for (auto &[eq_name, equation] : copy.equations_) { // iterate over equations in serial
+
+            vector<Term> &terms = equation.terms();
+
+            for (const auto &term: terms) {
+                VertexPtr lhs = term.lhs();
+                if (!lhs->is_linked() && !lhs->is_constant())
+                    names.insert(lhs->name());
+                else if (lhs->is_temp())
+                    names.insert(as_link(lhs)->str(true, false));
+
+                for (const auto &op: term.rhs()) {
+                    if (!op->is_linked() && !op->is_constant())
+                        names.insert(op->name());
+                    else if (op->is_linked()){
+                        if (op->is_temp())
+                            names.insert(as_link(op)->str(true, false));
+
+                        vertex_vector vertices = as_link(op)->vertices();
+                        for (const auto &vertex: vertices)
+                            if (!vertex->is_linked() && !vertex->is_constant())
+                                names.insert(vertex->name());
+                    }
+                }
+
+                auto temps = as_link(lhs + term.term_linkage())->get_temps(true, false);
+                for (const auto &temp: temps)
+                    names.insert(as_link(temp)->str(true, false));
+
+            }
 
             // skip "temp" equation
             if (eq_name == "temp" || eq_name == "scalar" || eq_name == "reused")
                 continue;
 
-            vector<Term> &terms = equation.terms();
-
-            if (terms.empty())
-                continue;
+            if (terms.empty()) continue;
 
 //            if (!equation.is_temp_equation_) {
 //                has_tmps = true;
@@ -149,28 +178,6 @@ namespace pdaggerq {
                     all_terms.push_back(term.clone());
             }
         }
-
-        // make set of all unique base names (ignore linkages and scalars)
-        set<string> names;
-        for (const auto &term: all_terms) {
-            VertexPtr lhs = term.lhs();
-            if (!lhs->is_linked() && !lhs->is_constant())
-                names.insert(lhs->name());
-            for (const auto &op: term.rhs()) {
-                if (!op->is_linked() && !op->is_constant())
-                    names.insert(op->name());
-                else {
-                    vertex_vector vertices = as_link(op)->vertices();
-                    for (const auto &vertex: vertices)
-                        if (!vertex->is_linked() && !vertex->is_constant())
-                            names.insert(vertex->name());
-                }
-            }
-        }
-
-        // add tmp declarations
-        names.insert("perm_tmps");
-        names.insert("tmps");
 
         // declare a map for each base name
         sout << h2 << " Declarations " << h2 << endl << endl;
@@ -370,9 +377,11 @@ namespace pdaggerq {
         }
 
         // add destructor terms to all_terms
-        for (const auto &[idx, terms] : destruct_terms) {
-            for (const auto &term : terms) {
-                all_terms.insert(all_terms.begin() + (int) idx + 1, term);
+        if (Term::deallocate_) {
+            for (const auto &[idx, terms]: destruct_terms) {
+                for (const auto &term: terms) {
+                    all_terms.insert(all_terms.begin() + (int) idx + 1, term);
+                }
             }
         }
 
@@ -553,8 +562,9 @@ namespace pdaggerq {
 
         string output;
 
+        // format for permutations if any
         bool has_permutations = !term_perms_.empty() && perm_type_ != 0;
-        if (has_permutations) { // if there are permutations
+        if (has_permutations) {
 
             // make intermediate vertex for the permutation
             MutableVertexPtr perm_vertex;
@@ -611,7 +621,7 @@ namespace pdaggerq {
             }
 
             // if an intermediate vertex was created, delete it
-            if (!perm_as_rhs) {
+            if (!perm_as_rhs && Term::deallocate_) {
                 // delete the permutation vertex
                 if (Vertex::print_type_ == "c++")
                     output += perm_vertex->name() + ".~TArrayD();";
@@ -643,6 +653,47 @@ namespace pdaggerq {
             right_term.compute_scaling(true);
 
             return left_term.str() + '\n' + right_term.str();
+        }
+
+        // we need binarization for c++ output. if more than 2 vertices, binarize into two terms
+        bool binarize = rhs_.size() > 2;
+        if (binarize && Term::binarize_) {
+
+            vertex_vector binarize_vertices = rhs_;
+
+            // extract last vertex
+            VertexPtr last_vertex = binarize_vertices.back();
+            binarize_vertices.pop_back();
+
+            // make intermediate vertex for the binarization
+            auto binarize_link = Linkage::link(binarize_vertices);
+            MutableVertexPtr binarize_vertex = make_shared<Vertex>("tmps_", binarize_link->lines());
+            binarize_vertex->vertex_type_ = 'b';    // sets printing for binarization vertex
+            binarize_vertex->sort();                // sort labels of binarization vertex
+            binarize_vertex->update_name();         // update name of binarization vertex
+
+            if (lhs_->name() == binarize_vertex->name()) {
+                binarize_vertex->vertex_type_ = 'd';
+                binarize_vertex->update_name();
+            }
+
+            // initialize initial binarization term
+            Term binarize_term;
+            binarize_term.lhs_ = binarize_vertex;     // set lhs to binarization vertex
+            binarize_term.rhs_ = binarize_vertices;   // set rhs to binarization vertices
+            binarize_term.expand_rhs(binarize_link);          // expand rhs
+            binarize_term.is_assignment_ = true;      // set term as assignment
+
+            // add string to output
+            output += binarize_term.str() + "\n";
+
+            // initialize term to binarize
+            Term binarize_last_term = *this;          // copy term
+            binarize_last_term.rhs_ = {binarize_vertex, last_vertex};
+            binarize_last_term.expand_rhs(binarize_last_term.term_linkage(true));          // expand rhs
+
+            output += binarize_last_term.str();
+            return output;
         }
 
         if (Vertex::print_type_ == "python")
@@ -687,6 +738,10 @@ namespace pdaggerq {
         if (output.back() != ';' && Vertex::print_type_ == "c++")
             output += ';';
 
+        // nevermind, remove the semicolon
+        if (Vertex::print_type_ == "c++")
+            output.pop_back();
+
         size_t pos = 0;
         while (pos != string::npos) {
             pos = output.find("* 1.00 *", pos);
@@ -696,7 +751,8 @@ namespace pdaggerq {
             }
         }
 
-        return output;
+//        return output;
+        return "( " + output + " )";
     }
 
     string Term::einsum_str() const {

@@ -284,6 +284,15 @@ namespace pdaggerq {
         if (options.contains("separate_sigma"))
             separate_sigma_ = options["separate_sigma"].cast<bool>();
 
+        if (options.contains("print_comments"))
+            Term::print_comments_ = options["print_comments"].cast<bool>();
+
+        if (options.contains("deallocate"))
+            Term::deallocate_ = options["deallocate"].cast<bool>();
+
+        if (options.contains("binarize"))
+            Term::binarize_ = options["binarize"].cast<bool>();
+
         cout << "Options:" << endl;
         cout << "--------" << endl;
         cout << "    print_level: " << print_level_
@@ -705,9 +714,7 @@ namespace pdaggerq {
         }
 
         print_guard guard;
-        if (print_level_ < 1) {
-            guard.lock();
-        }
+        if (print_level_ < 1) guard.lock();
 
         if (flop_map_init_.empty() || mem_map_init_.empty()) {
             flop_map_init_ = flop_map_;
@@ -737,7 +744,6 @@ namespace pdaggerq {
             cout << "----- Substituting scalars -----" << endl;
             substitute(false, true);
         }
-
         if (opt_level_ >= 2) {
 
             // find and substitute intermediate contractions
@@ -758,6 +764,7 @@ namespace pdaggerq {
         update_timer.start();
         prune(false);
         merge_terms();
+        reorder(true);
 
         // set optimized flag to true
         is_optimized_ = true;

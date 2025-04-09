@@ -414,14 +414,9 @@ bool Term::make_scalars(linkage_set &scalars, long &id) {
         if (made_scalar) break;
     }
 
-    // if a substitution was made, replace the linkage in the term
-    if (made_scalar) {
-        // replace the rhs with the best linkage (if it is a temp, we should not expand into a vector)
-        expand_rhs(new_linkage);
-        request_update(); // set flags for optimization
-        compute_scaling(true); // recompute the flop and memory cost of the term
-        return made_scalar;
-    } else {
-        return made_scalar;
-    }
+    // replace the rhs with the best linkage (if it is a temp, we should not expand into a vector)
+    expand_rhs(new_linkage);
+    request_update(); // set flags for optimization
+    compute_scaling(true); // recompute the flop and memory cost of the term
+    return made_scalar;
 }

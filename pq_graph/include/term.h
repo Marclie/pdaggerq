@@ -75,6 +75,9 @@ namespace pdaggerq {
         bool generated_linkages_ = false; // flag for if term has generated linkages (default is false)
         bool is_assignment_ = false; // true if the term is an assignment (default is false, using +=)
         string print_override_; // string to override print function
+        static inline bool print_comments_ = true; // print comments in term string
+        static inline bool deallocate_ = true; // deallocate temporary variables
+        static inline bool binarize_ = false; // deallocate temporary variables
 
         static inline size_t max_depth_ = -1; // maximum number of rhs in a linkage (no limit by default)
         static inline shape max_shape_; // maximum shape of a linkage
@@ -88,7 +91,7 @@ namespace pdaggerq {
         Term() = default;
         ~Term() = default;
 
-        double coefficient_{}; // coefficient of the term
+        double coefficient_ = 1.0; // coefficient of the term
 
         /**
          * expand rhs of term using a linkage

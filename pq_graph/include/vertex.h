@@ -201,7 +201,7 @@ namespace pdaggerq {
          * the blocked lines (alpha/active) come first, followed by the full lines (full/beta) for the same virtual/occupied block
          */
         void sort();
-        static void sort(line_vector &lines); // static version of sort
+        static void sort(line_vector &lines, bool ignore_pairs = false); // static version of sort
 
         /**
          * get the ovstring of from lines
@@ -414,7 +414,7 @@ namespace pdaggerq {
         virtual bool is_linked() const { return false; }
         virtual bool is_temp() const { return false; }
         virtual bool is_addition() const { return false; } // whether the linkage is an addition
-        virtual bool is_expandable() const { return false; } // whether the linkage is expandable
+        virtual bool is_expandable(bool expand_scalar = false) const { return false; } // whether the linkage is expandable
         virtual vertex_vector link_vector(bool regenerate = false, bool fully_expand = false) const { return {shared_from_this()}; }
         virtual bool is_reused() const { return false; } // whether the linkage is reused
         virtual size_t depth() const { return 0; }
