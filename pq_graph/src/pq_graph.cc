@@ -302,6 +302,10 @@ namespace pdaggerq {
             shape::nocc_ = static_cast<size_t>(options["nocc"].cast<long>());
         if (options.contains("nvirt"))
             shape::nvirt_ = static_cast<size_t>(options["nvirt"].cast<long>());
+        if (options.contains("nchol"))
+            shape::nchol_ = static_cast<size_t>(options["nchol"].cast<long>());
+        if (options.contains("nroot"))
+            shape::nroot_ = static_cast<size_t>(options["nroot"].cast<long>());
 
 
         if (options.contains("nthreads")) {
@@ -453,6 +457,10 @@ namespace pdaggerq {
              << "  // number of occupied orbitals (default: 0 for arbitrary systems)" << endl;
         cout << "    nvirt: " << (shape::nvirt_ ? std::to_string(shape::nvirt_) : "0")
              << "  // number of virtual orbitals (default: 0 for arbitrary systems)" << endl;
+        cout << "    nchol: " << (shape::nvirt_ ? std::to_string(shape::nvirt_) : "0")
+             << "  // number of cholesky factors (default: 5*[nocc+nvirt])" << endl;
+	cout << "    nroot: " << (shape::nroot_ ? std::to_string(shape::nroot_) : "0")
+	     << "  // number of excited state roots (default: 10)" << endl;
 
         cout << "    cache_elements: " << (Linkage::cache_elements_ ? "true" : "false")
              << "  // whether to cache the elements and permutations of linkages for faster access (default: true)" << endl;

@@ -38,6 +38,8 @@ struct shape {
 
     static inline size_t nocc_  = 0;
     static inline size_t nvirt_ = 0;
+    static inline size_t nchol_ = 0;
+    static inline size_t nroot_ = 0;
 
     uint_fast8_t n_ = 0; // number of lines
 
@@ -48,7 +50,7 @@ struct shape {
     uint_fast8_t  a_ = 0,  b_ = 0;
 
     uint_fast8_t L_ = 0; // sigma index
-    uint_fast8_t Q_ = 0; // density index
+    uint_fast8_t Q_ = 0; // cholesky index
 
     uint_fast8_t no_ = 0, nv_ = 0; // nuclear (second-species) occupied / virtual
 
@@ -204,12 +206,13 @@ struct shape {
             double other_size = std::pow(nocc_, other.o_) * std::pow(nvirt_, other.v_);
 
             // Cholesky vectors are typically ~5 times the number of basis functions, so we approximate the scaling accordingly
-            if (Q_ > 0) this_size *= std::pow(5*(nocc_ + nvirt_), Q_);
-            if (other.Q_ > 0) other_size *= std::pow(5*(nocc_ + nvirt_), other.Q_);
+	    size_t nchol = nchol_ > 0 ? nchol_ : 5*(nocc_ + nvirt_);
+            if (Q_ > 0) this_size *= std::pow(nchol, Q_);
+            if (other.Q_ > 0) other_size *= std::pow(nchol, other.Q_);
 
             // This contraction is repeated M times for each root and k times for each iteration
-            // we approximate k as 30 and assume M = 10 for the number of roots
-            size_t nroot = 10; // make this a user parameter?
+            // we approximate k as 30 and assume M = 10 for the number of roots unless specified otherwise
+            size_t nroot = nroot_ > 0 ? nroot_ : 10;
             if (L_ > 0) this_size *= 30 * std::pow(nroot, L_);
             if (other.L_ > 0) other_size *= 30 * std::pow(nroot, other.L_);
 
