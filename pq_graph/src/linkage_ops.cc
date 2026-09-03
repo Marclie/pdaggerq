@@ -713,7 +713,7 @@ namespace pdaggerq {
 
                 // if the right vertex expandability is the same, prefer the permutation with less dimensions (i.e., less lines)
                 if (!make_best && scaling_check == scaling_map::this_same) {
-                    make_best = perm->lines() < best_perm->lines();
+                    make_best = line_vector_compare()(perm->lines(), best_perm->lines());
                 }
 
                 // if lines are the same, use string representation of names

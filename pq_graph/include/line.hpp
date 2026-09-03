@@ -197,15 +197,15 @@ namespace pdaggerq {
             return label_ < other.label_;
         }
 
-        bool same_kind(const Line& other) const {
+        bool property_less(const Line& other) const {
             // sort by sig, nuc, o, a, den, but not label (see operator<)
             if (sig_ ^ other.sig_) return sig_;
             if (nuc_ ^ other.nuc_) return !nuc_;
             if (o_ ^ other.o_) return !o_;
             if (a_ ^ other.a_) return a_;
             if (den_ ^ other.den_) return den_;
-            if (sig_ & other.sig_) return label_ <= other.label_; // L should be first
-            return true;
+            if (sig_ & other.sig_) return label_ < other.label_; // L should be first
+            return false; // properties are equal, hence not less than
         }
 
         bool operator>(const Line& other) const {
@@ -352,21 +352,62 @@ namespace pdaggerq {
     /// *** Hash functions *** ///
 
     // struct for comparing lines while ignoring the label
-    struct line_compare {
+    struct line_property_compare {
         bool operator()(const Line &left, const Line &right) const {
-            return left.same_kind(right);
+            return left.property_less(right);
 //            return left < right;
         }
 
         bool operator()(const Line *left, const Line *right) const {
             if (!left || !right) return !right;
-            else return left->same_kind(*right);
+            else return left->property_less(*right);
 //            else return left->operator<(*right);
         }
     };
 
     // define a vector of lines
     typedef std::vector<Line, std::allocator<Line>> line_vector;
+
+    // Compare line vectors lexicographically by line properties first, then by label.
+    // For example, an occupied vector (j, k) precedes a virtual vector (i, a, b, c)
+    // even though "i" is lexicographically before "j".
+    struct line_vector_compare {
+        bool operator()(const line_vector &lines1, const line_vector &lines2) const {
+            // std::lexicographical_compare examines the first pair that differs. This
+            // comparator is the strict, label-free part of Line::operator<(): it has
+            // the same property priority (sig, nuc, o, a, den), but returns false
+            // when all properties agree. Thus it is safe for an ordering algorithm.
+            //
+            // For [Line("j"), Line("k")] versus [Line("i"), Line("a")], the
+            // first occupied lines have equal properties, then occupied "k" sorts
+            // before virtual "a", so this call returns true without considering
+            // either label. This is the same first-difference decision a hand-written
+            // loop would make; the standard algorithm supplies that loop.
+
+            // First, compare the sequence of property tuples. A reverse comparison
+            // distinguishes equality from the case where lines2 is property-less.
+            if (std::lexicographical_compare(lines1.begin(), lines1.end(),
+                                             lines2.begin(), lines2.end(), line_property_compare())) {
+                return true;
+            }
+            if (std::lexicographical_compare(lines2.begin(), lines2.end(),
+                                             lines1.begin(), lines1.end(), line_property_compare())) {
+                return false;
+            }
+
+            // Equal property prefixes sort like ordinary lexicographical sequences:
+            // the shorter vector comes first.
+            if (lines1.size() != lines2.size()) {
+                return lines1.size() < lines2.size();
+            }
+
+            // Only property-identical, equally sized vectors reach this final tie
+            // breaker, where labels make the ordering deterministic.
+            return std::lexicographical_compare(
+                    lines1.begin(), lines1.end(), lines2.begin(), lines2.end(),
+                    [](const Line &left, const Line &right) { return left.label_ < right.label_; });
+        }
+    };
 
 } // namespace pdaggerq
 

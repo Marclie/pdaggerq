@@ -102,7 +102,7 @@ namespace pdaggerq {
             lines.reserve(lines_.size());
             for (const Line &line : lines_)
                 lines.insert(
-                        std::lower_bound(lines.begin(), lines.end(), line, line_compare()), line);
+                        std::lower_bound(lines.begin(), lines.end(), line, line_property_compare()), line);
         }
 
         return printer_->format_lines(lines);

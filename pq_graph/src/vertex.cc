@@ -492,12 +492,19 @@ namespace pdaggerq {
 
         // Returns true if candidate is a better ERI representation than current best
         auto is_better = [&](const Vertex &candidate) {
+            // ensure correct occupied/virtual ordering and valid blocking
             if (valid_ovstrings.find(candidate.ovstring()) == valid_ovstrings.end())
                 return false;
+
+            // if correct occupied/virtual ordering, check if spin blocking is valid
             bool blk_valid = valid_blks.find(candidate.blk_string()) != valid_blks.end();
             if (best_eri.empty() || (blk_valid && !best_blk_valid))
-                return true;
-            return blk_valid && candidate.lines_ < best_eri.lines_;
+                return true;                
+            if (!blk_valid)
+                return false;
+
+            // block is valid, compare line types to determine which is better (prefer fewer lines of type 'v' and 'o')
+            return line_vector_compare()(candidate.lines_, best_eri.lines_);
         };
 
         auto set_best = [&](const Vertex &candidate, bool swap_sign) {
@@ -539,7 +546,7 @@ namespace pdaggerq {
         // sort lines by occ/vir status (virs on left, occ on right); sort lines by blocks for same occ/vir (alpha on left, beta on right).
         // if all these are equal, sort by ASCII ordering of line name
         if (merge_braket) {
-            if (ignore_labels) std::sort(lines.begin(), lines.end(), line_compare());
+            if (ignore_labels) std::sort(lines.begin(), lines.end(), line_property_compare());
             else std::sort(lines.begin(), lines.end(), std::less<>());
             return;
         }
@@ -556,8 +563,8 @@ namespace pdaggerq {
 
         // sort the sig and den lines
         if (ignore_labels) {
-            std::sort(sig.begin(), sig.end(), line_compare());
-            std::sort(den.begin(), den.end(), line_compare());
+            std::sort(sig.begin(), sig.end(), line_property_compare());
+            std::sort(den.begin(), den.end(), line_property_compare());
         } else {
             std::sort(sig.begin(), sig.end(), std::less<>());
             std::sort(den.begin(), den.end(), std::less<>());
@@ -584,8 +591,8 @@ namespace pdaggerq {
 
         // sort bra and ket lines
         if (ignore_labels) {
-            std::sort(bra.begin(), bra.end(), line_compare());
-            std::sort(ket.begin(), ket.end(), line_compare());
+            std::sort(bra.begin(), bra.end(), line_property_compare());
+            std::sort(ket.begin(), ket.end(), line_property_compare());
         } else {
             std::sort(bra.begin(), bra.end(), std::less<>());
             std::sort(ket.begin(), ket.end(), std::less<>());
