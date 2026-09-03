@@ -503,8 +503,8 @@ namespace pdaggerq {
             if (!blk_valid)
                 return false;
 
-            // block is valid, compare line types to determine which is better (prefer fewer lines of type 'v' and 'o')
-            return line_vector_compare()(candidate.lines_, best_eri.lines_);
+            // block is valid, compare line types to determine which is better (prefer more lines of type 'v' and 'o')
+            return line_vector_compare()(best_eri.lines_, candidate.lines_);
         };
 
         auto set_best = [&](const Vertex &candidate, bool swap_sign) {
