@@ -504,7 +504,8 @@ namespace pdaggerq {
                 return false;
 
             // block is valid, compare line types to determine which is better (prefer more lines of type 'v' and 'o')
-            return line_vector_compare()(best_eri.lines_, candidate.lines_);
+            // compare lines without considering labels (prefer no change in label ordering if all else is equal)
+            return line_vector_compare(false)(best_eri.lines_, candidate.lines_);
         };
 
         auto set_best = [&](const Vertex &candidate, bool swap_sign) {
@@ -540,14 +541,13 @@ namespace pdaggerq {
         return swap_sign_best; // return sign change
     }
 
-    void Vertex::sort(line_vector &lines, bool merge_braket, bool ignore_labels) {
+    void Vertex::sort(line_vector &lines, bool merge_braket, bool compare_labels) {
         if (lines.empty()) return; // do nothing if rank is zero
 
         // sort lines by occ/vir status (virs on left, occ on right); sort lines by blocks for same occ/vir (alpha on left, beta on right).
         // if all these are equal, sort by ASCII ordering of line name
         if (merge_braket) {
-            if (ignore_labels) std::sort(lines.begin(), lines.end(), line_property_compare());
-            else std::sort(lines.begin(), lines.end(), std::less<>());
+            std::stable_sort(lines.begin(), lines.end(), line_compare(compare_labels));
             return;
         }
 
@@ -562,16 +562,11 @@ namespace pdaggerq {
         }
 
         // sort the sig and den lines
-        if (ignore_labels) {
-            std::sort(sig.begin(), sig.end(), line_property_compare());
-            std::sort(den.begin(), den.end(), line_property_compare());
-        } else {
-            std::sort(sig.begin(), sig.end(), std::less<>());
-            std::sort(den.begin(), den.end(), std::less<>());
-        }
+        std::stable_sort(sig.begin(), sig.end(), line_compare(compare_labels));
+        std::stable_sort(den.begin(), den.end(), line_compare(compare_labels));
 
         // get number of lines that are not sig or den
-        n -= sig.size() - den.size();
+        n -= sig.size() + den.size();
         if (n == 0) return; // if there are no lines, do nothing
 
         // reserve space for bra and ket lines
@@ -584,19 +579,15 @@ namespace pdaggerq {
             if (line.sig_ || line.den_) continue; // skip sig and den lines
             if (pos < hsize) {
                 bra.push_back(line); // add to bra lines (note: bra will never be smaller than ket)
+                ++pos;
             } else {
                 ket.push_back(line); // add to ket lines
             }
         }
 
         // sort bra and ket lines
-        if (ignore_labels) {
-            std::sort(bra.begin(), bra.end(), line_property_compare());
-            std::sort(ket.begin(), ket.end(), line_property_compare());
-        } else {
-            std::sort(bra.begin(), bra.end(), std::less<>());
-            std::sort(ket.begin(), ket.end(), std::less<>());
-        }
+        std::stable_sort(bra.begin(), bra.end(), line_compare(compare_labels));
+        std::stable_sort(ket.begin(), ket.end(), line_compare(compare_labels));
 
         // merge bra and ket lines
         lines.clear(); // clear lines
@@ -610,7 +601,7 @@ namespace pdaggerq {
     }
 
     void Vertex::sort() {
-        sort(lines_, false, false); // sort lines without merging brackets and ignoring labels
+        sort(lines_, false, false); // sort lines without merging brackets and while ignoring labels
         update_lines(lines_); // set lines
     }
 

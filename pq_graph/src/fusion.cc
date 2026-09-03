@@ -103,7 +103,7 @@ struct LinkTracker {
                     }
 
                     // sort the trunc term by name and update
-                    std::sort(trunc_rhs.begin(), trunc_rhs.end(),
+                    std::stable_sort(trunc_rhs.begin(), trunc_rhs.end(),
                               [](const VertexPtr &a, const VertexPtr &b) { return a->name() < b->name(); });
                     trunc_term.rhs() = trunc_rhs;
                     trunc_term.compute_scaling(true);
@@ -164,7 +164,7 @@ struct LinkTracker {
                 sort_key += link_infos[i].term->str();
                 argsorted_infos.emplace_back(sort_key, i);
             }
-            std::sort(argsorted_infos.begin(), argsorted_infos.end());
+            std::stable_sort(argsorted_infos.begin(), argsorted_infos.end());
 
             // reorder the info vectors by the sorted indices
             vector<LinkInfo> new_link_infos;
@@ -492,7 +492,7 @@ struct LinkMerger {
         sorted_links.reserve(link_merge_map_.size());
         for (auto &[link, _]: link_merge_map_)
             if (link) sorted_links.push_back(link);
-        std::sort(sorted_links.begin(), sorted_links.end(), [](const LinkagePtr &a, const LinkagePtr &b) { return a->id() > b->id(); });
+        std::stable_sort(sorted_links.begin(), sorted_links.end(), [](const LinkagePtr &a, const LinkagePtr &b) { return a->id() > b->id(); });
 
         // Select complete, pairwise-disjoint fusion groups.  A group owns all
         // terms tracked by its target and merge links; groups sharing a Term*
@@ -564,7 +564,7 @@ struct LinkMerger {
         vector<LinkagePtr> merge_targets;
         merge_targets.reserve(link_merge_map_.size());
         for (auto &entry : link_merge_map_) merge_targets.push_back(entry.first);
-        std::sort(merge_targets.begin(), merge_targets.end(), [](const LinkagePtr &a, const LinkagePtr &b) {
+        std::stable_sort(merge_targets.begin(), merge_targets.end(), [](const LinkagePtr &a, const LinkagePtr &b) {
             const string sa = a->tot_str(true), sb = b->tot_str(true);
             return sa != sb ? sa < sb : a->id() < b->id();
         });

@@ -218,9 +218,9 @@ namespace pdaggerq {
          * the blocked lines (alpha/active) come first, followed by the full lines (full/beta) for the same virtual/occupied block
          * @param lines vector of lines to sort
          * @param merge_braket do we sort the bra and ket indices separately? (default false)
-         * @param ignore_labels do we ignore the labels of the lines when sorting? (default false)
+         * @param compare_labels do we compare the labels of the lines when sorting? (default false)
          */
-        static void sort(line_vector &lines, bool merge_braket = false, bool ignore_labels = false); // static version of sort
+        static void sort(line_vector &lines, bool merge_braket = false, bool compare_labels = true); // static version of sort
         void sort();
 
         /**

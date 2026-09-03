@@ -182,7 +182,7 @@ namespace pdaggerq {
 
             // sort scalars in scalars equation
             vector<Term> scalar_terms = copy.equations_["scalar"].terms();
-            std::sort(scalar_terms.begin(), scalar_terms.end(), [](const Term &a, const Term &b) {
+            std::stable_sort(scalar_terms.begin(), scalar_terms.end(), [](const Term &a, const Term &b) {
                 return a.max_id("scalar") < b.max_id("scalar");
             });
 	    
@@ -241,7 +241,7 @@ namespace pdaggerq {
 
             // sort reused in reused equation
             vector<Term> reused_terms = copy.equations_["reused"].terms();
-            std::sort(reused_terms.begin(), reused_terms.end(), [](const Term &a, const Term &b) {
+            std::stable_sort(reused_terms.begin(), reused_terms.end(), [](const Term &a, const Term &b) {
                 return a.max_id("reused") < b.max_id("reused");
             });
 	    

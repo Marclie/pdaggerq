@@ -417,7 +417,7 @@ void PQGraph::substitute(bool format_sigma, bool only_scalars) {
             }
         }
         // sort by scaling (best first), breaking ties on the canonical linkage string
-        std::sort(sorted_test_data.begin(), sorted_test_data.end(),
+        std::stable_sort(sorted_test_data.begin(), sorted_test_data.end(),
                   [](const std::tuple<std::pair<scaling_map, scaling_map>, std::string, MutableLinkagePtr> &a,
                      const std::tuple<std::pair<scaling_map, scaling_map>, std::string, MutableLinkagePtr> &b) {
                       if (std::get<0>(a).first != std::get<0>(b).first) return std::get<0>(a).first < std::get<0>(b).first;

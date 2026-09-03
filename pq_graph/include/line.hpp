@@ -197,7 +197,7 @@ namespace pdaggerq {
             return label_ < other.label_;
         }
 
-        bool property_less(const Line& other) const {
+        bool compare_type(const Line& other) const {
             // sort by sig, nuc, o, a, den, but not label (see operator<)
             if (sig_ ^ other.sig_) return sig_;
             if (nuc_ ^ other.nuc_) return !nuc_;
@@ -352,16 +352,19 @@ namespace pdaggerq {
     /// *** Hash functions *** ///
 
     // struct for comparing lines while ignoring the label
-    struct line_property_compare {
+    struct line_compare {
+        line_compare(bool compare_labels = false) : compare_labels(compare_labels) {}
+        bool compare_labels;
+
         bool operator()(const Line &left, const Line &right) const {
-            return left.property_less(right);
-//            return left < right;
+            if (!compare_labels) return left.compare_type(right);
+            else return left < right;            
         }
 
         bool operator()(const Line *left, const Line *right) const {
             if (!left || !right) return !right;
-            else return left->property_less(*right);
-//            else return left->operator<(*right);
+            if (!compare_labels) return left->compare_type(*right);
+            else return *left < *right;
         }
     };
 
@@ -372,6 +375,10 @@ namespace pdaggerq {
     // For example, an occupied vector (j, k) precedes a virtual vector (i, a, b, c)
     // even though "i" is lexicographically before "j".
     struct line_vector_compare {
+        line_vector_compare(bool compare_labels = true) : compare_labels(compare_labels) {}
+
+        bool compare_labels;
+
         bool operator()(const line_vector &lines1, const line_vector &lines2) const {
             // std::lexicographical_compare examines the first pair that differs. This
             // comparator is the strict, label-free part of Line::operator<(): it has
@@ -387,25 +394,24 @@ namespace pdaggerq {
             // First, compare the sequence of property tuples. A reverse comparison
             // distinguishes equality from the case where lines2 is property-less.
             if (std::lexicographical_compare(lines1.begin(), lines1.end(),
-                                             lines2.begin(), lines2.end(), line_property_compare())) {
+                                             lines2.begin(), lines2.end(), line_compare(false))) {
                 return true;
             }
             if (std::lexicographical_compare(lines2.begin(), lines2.end(),
-                                             lines1.begin(), lines1.end(), line_property_compare())) {
+                                             lines1.begin(), lines1.end(), line_compare(false))) {
                 return false;
             }
 
             // Equal property prefixes sort like ordinary lexicographical sequences:
             // the shorter vector comes first.
-            if (lines1.size() != lines2.size()) {
+            if (!compare_labels || lines1.size() != lines2.size()) {
                 return lines1.size() < lines2.size();
             }
 
             // Only property-identical, equally sized vectors reach this final tie
             // breaker, where labels make the ordering deterministic.
-            return std::lexicographical_compare(
-                    lines1.begin(), lines1.end(), lines2.begin(), lines2.end(),
-                    [](const Line &left, const Line &right) { return left.label_ < right.label_; });
+            return std::lexicographical_compare(lines1.begin(), lines1.end(),
+                                                lines2.begin(), lines2.end());
         }
     };
 

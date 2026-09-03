@@ -184,7 +184,7 @@ namespace pdaggerq {
         }
 
         // sort the connections
-        std::sort(connec_map_.begin(), connec_map_.end());
+        std::stable_sort(connec_map_.begin(), connec_map_.end());
 
         // collect external lines into stack-allocated buffers (avoids heap allocation)
         Line sig_buf[left_size + right_size];

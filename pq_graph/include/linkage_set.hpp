@@ -78,7 +78,7 @@ namespace pdaggerq {
             sorted_.reserve(linkages_.size());
             for (const auto &link : linkages_)
                 sorted_.push_back(link);
-            std::sort(sorted_.begin(), sorted_.end(), [](const LinkagePtr &a, const LinkagePtr &b) {
+            std::stable_sort(sorted_.begin(), sorted_.end(), [](const LinkagePtr &a, const LinkagePtr &b) {
                 return a->base_name() < b->base_name();
             });
             dirty_.store(false, std::memory_order_release);

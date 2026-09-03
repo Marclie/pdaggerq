@@ -160,7 +160,7 @@ size_t PQGraph::prune(bool keep_single_use) {
         linkage_vector sorted_to_remove;
         sorted_to_remove.reserve(to_remove.size());
         sorted_to_remove.insert(sorted_to_remove.begin(), to_remove.begin(), to_remove.end());
-        std::sort(sorted_to_remove.begin(), sorted_to_remove.end(), [](const LinkagePtr &a, const LinkagePtr &b) {
+        std::stable_sort(sorted_to_remove.begin(), sorted_to_remove.end(), [](const LinkagePtr &a, const LinkagePtr &b) {
             // if types are different, sort by type
             if (a->type() != b->type()) return a->type() > b->type();
                 // else sort by id for the same type
@@ -405,7 +405,7 @@ void PQGraph::reindex(size_t passes) {
         if (vertex != nullptr && vertex->is_linked()) {
             // get temps and sort by id
             auto nested_temps = as_link(vertex)->get_temps();
-            std::sort(nested_temps.begin(), nested_temps.end(), [](const VertexPtr &a, const VertexPtr &b) {
+            std::stable_sort(nested_temps.begin(), nested_temps.end(), [](const VertexPtr &a, const VertexPtr &b) {
                 return a->id() < b->id();
             });
             for (auto &temp : nested_temps) {
@@ -460,7 +460,7 @@ void PQGraph::reindex(size_t passes) {
     for (auto & [link, pos] : last_usage) {
         last_usage_vec.emplace_back(link, pos);
     }
-    std::sort(last_usage_vec.begin(), last_usage_vec.end(), [](const pair<LinkagePtr, size_t> &a, const pair<LinkagePtr, size_t> &b) {
+    std::stable_sort(last_usage_vec.begin(), last_usage_vec.end(), [](const pair<LinkagePtr, size_t> &a, const pair<LinkagePtr, size_t> &b) {
         if (a.second != b.second) return a.second < b.second;
         return a.first->id() < b.first->id();
     });
@@ -515,7 +515,7 @@ void PQGraph::reindex(size_t passes) {
     }
 
     // sort print map by id
-    std::sort(print_map.begin(), print_map.end(), [](const pair<long, string> &a, const pair<long, string> &b) {
+    std::stable_sort(print_map.begin(), print_map.end(), [](const pair<long, string> &a, const pair<long, string> &b) {
         return a.first < b.first;
     });
 

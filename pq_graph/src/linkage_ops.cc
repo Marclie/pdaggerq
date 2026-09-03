@@ -445,7 +445,7 @@ namespace pdaggerq {
         }
 
         // sort temps by id
-        std::sort(temps.begin(), temps.end(), [](const VertexPtr &a, const VertexPtr &b) {
+        std::stable_sort(temps.begin(), temps.end(), [](const VertexPtr &a, const VertexPtr &b) {
             return a->id() < b->id();
         });
 

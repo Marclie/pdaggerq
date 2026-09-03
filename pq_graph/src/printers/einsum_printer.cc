@@ -102,8 +102,8 @@ string EinsumPrinter::format_contraction(
         if (tensor_strs.size() == 1) {
             string sorted_input  = tensor_labels[0];
             string sorted_output = output_labels;
-            std::sort(sorted_input.begin(),  sorted_input.end());
-            std::sort(sorted_output.begin(), sorted_output.end());
+            std::stable_sort(sorted_input.begin(),  sorted_input.end());
+            std::stable_sort(sorted_output.begin(), sorted_output.end());
             if (sorted_input != sorted_output) {
                 if (tensor_types[0] == output_types)
                     skip_einsum = true;
@@ -215,8 +215,8 @@ string EinsumPrinter::format_term(const Term& t) const {
     // Permute tensors if needed
     if (lhs_string != rhs_string) {
         string sorted_lhs = lhs_string, sorted_rhs = rhs_string;
-        std::sort(sorted_lhs.begin(), sorted_lhs.end());
-        std::sort(sorted_rhs.begin(), sorted_rhs.end());
+        std::stable_sort(sorted_lhs.begin(), sorted_lhs.end());
+        std::stable_sort(sorted_rhs.begin(), sorted_rhs.end());
 
         if (sorted_lhs == sorted_rhs) {
             // Same character set, different order: valid einsum permutation
