@@ -198,26 +198,34 @@ struct shape {
         }
         return result;
     }
+
+    double cost() const {
+        size_t nv = nvirt_ > 0 ? nvirt_ : 1000;
+        size_t no = nocc_  > 0 ? nocc_  : 50;
+        size_t nchol = nchol_ > 0 ? nchol_ : 5*(nocc_ + nvirt_);
+        size_t nroot = nroot_ > 0 ? nroot_ : 10;
+        
+        // For non-zero numbers of virtual or occupied orbitals, use the below algorithm
+        double cost_val  = std::pow(no, o_) * std::pow(nv, v_);
+
+        // Cholesky vectors are typically ~5 times the number of basis functions, so we approximate the scaling accordingly
+        if (Q_ > 0) cost_val *= std::pow(nchol, Q_);
+
+        // This contraction is repeated M times for each root and k times for each iteration
+        // we approximate k as 30 and assume M = 10 for the number of roots unless specified otherwise
+        if (L_ > 0) cost_val *= 30 * std::pow(nroot, L_);
+
+        return cost_val;
+    }
+    
     bool operator<(const shape &other) const {
 
         if (nvirt_ != 0 && nocc_ != 0) {
-            // For non-zero numbers of virtual or occupied orbitals, use the below algorithm
-            double this_size  = std::pow(nocc_, o_) * std::pow(nvirt_, v_);
-            double other_size = std::pow(nocc_, other.o_) * std::pow(nvirt_, other.v_);
-
-            // Cholesky vectors are typically ~5 times the number of basis functions, so we approximate the scaling accordingly
-	    size_t nchol = nchol_ > 0 ? nchol_ : 5*(nocc_ + nvirt_);
-            if (Q_ > 0) this_size *= std::pow(nchol, Q_);
-            if (other.Q_ > 0) other_size *= std::pow(nchol, other.Q_);
-
-            // This contraction is repeated M times for each root and k times for each iteration
-            // we approximate k as 30 and assume M = 10 for the number of roots unless specified otherwise
-            size_t nroot = nroot_ > 0 ? nroot_ : 10;
-            if (L_ > 0) this_size *= 30 * std::pow(nroot, L_);
-            if (other.L_ > 0) other_size *= 30 * std::pow(nroot, other.L_);
-
-            double diff = this_size - other_size;
-            if (std::fabs(diff) > 1e-8) return this_size < other_size;
+            double this_cost  = cost();
+            double other_cost = other.cost();
+            double diff = this_cost - other_cost;
+            if (std::fabs(diff) > 1e-8) return this_cost < other_cost;
+            // else costs are essentially equal, so fall back to lexicographic comparison
         }
 
         // For arbitrary numbers of occupied and virtual orbitals, below algorithm is used
