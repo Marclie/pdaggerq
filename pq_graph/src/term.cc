@@ -116,11 +116,6 @@ namespace pdaggerq {
         for (const auto & [type, integrals] : pq_str->ints) { // add integrals
             for (auto & integral : integrals) {
                 MutableVertexPtr int_vert = make_shared<Vertex>(integral, type);
-                if (type == "eri") { // permute eri to proper form
-                    // swap sign if eri is permuted with sign change
-                    if (int_vert->permute_eri())
-                        swap_sign();
-                }
                 rhs_.push_back(int_vert);
             }
         }
@@ -165,10 +160,6 @@ namespace pdaggerq {
             } else {
                 // add vertex to vector
                 MutableVertexPtr op = make_shared<Vertex>(op_string); // create vertex
-                if (op->name().find("eri") != string::npos && op->name().find('\t') == string::npos) {
-                    // check if vertex is an eri and not a linkage.
-                    if (op->permute_eri()) swap_sign(); // swap sign if eri is permuted with sign change
-                }
                 rhs_.push_back(op); // add vertex to vector
             }
         }
@@ -185,16 +176,6 @@ namespace pdaggerq {
         eq_ = lhs_->clone(); // shallow copy of lhs for equation
         rhs_ = vertices; // set rhs
         coefficient_ = coefficient; // set coefficient
-
-        // check sign of coefficient if term has an eri vertex
-        for (auto & op : rhs_) {
-            // check if eri is in name
-            if (op->base_name() =="eri") {
-                MutableVertexPtr new_eri = op->clone();
-                if (new_eri->permute_eri()) swap_sign(); // swap sign if eri is permuted with sign change
-                op = new_eri;
-            }
-        }
 
         compute_scaling(); // compute flop and memory scaling of the term
 
@@ -307,6 +288,25 @@ namespace pdaggerq {
 
         request_update();
         compute_scaling(true);
+    }
+
+    void Term::permute_eri() {
+        for (auto & op : rhs_) {
+            // bring eri to canonical form and swap sign if necessary
+            if (op->base_name() == "eri") {
+                MutableVertexPtr new_eri = op->clone();
+                if (new_eri->permute_eri()) swap_sign(); // swap sign if eri is permuted with sign change
+                if(*new_eri != *op) {
+                    // request update if eri is permuted                    
+                    op = new_eri;
+                    request_update();
+                }
+            }
+            // TODO: add other operators that need to be permuted to canonical form (e.g., density fitting vertices, amplitudes, etc.)
+        }
+
+        
+        compute_scaling();
     }
 
     void Term::reorder(bool recompute) { // reorder rhs in term
@@ -866,89 +866,7 @@ namespace pdaggerq {
             MutableVertexPtr new_op = op->clone();
             new_op->replace_lines(line_map);
             new_op->update_name();
-
-            if (new_op->base_name() == "eri") {
-                if (new_op->permute_eri())
-                    swap_sign(); // swap sign if eri is permuted with sign change
-            }
-
             op = new_op;
-        }
-    }
-
-    vector<Term> Term::convert_beta_to_alpha() const {
-
-        // create a copy of the current term
-        Term alpha_term = *this;
-
-        return {alpha_term};
-
-        // initialize map to determine which lines to change.
-        LineMap beta_to_alpha;
-
-        // first we change lines associated with all beta amplitudes
-        for (auto & op : alpha_term.rhs_) {
-            if (op->vertex_type_ == 'a' && op->shape_.a_ == 0 && op->shape_.b_ > 0){
-                for (const auto & line : op->lines()){
-                    Line new_line = line;
-                    new_line.a_ = true;
-                    beta_to_alpha[line] = new_line;
-                }
-            }
-        }
-
-        // replace lines using the map
-        alpha_term.replace_lines(beta_to_alpha);
-
-        return {alpha_term};
-
-        // now we replace all t2-aa blocks with permutations of t2-ab blocks
-        LineMap t2abij_map, t2baij_map;
-        for (auto & op : alpha_term.rhs_) {
-            if (op->vertex_type_ == 'a' && op->shape_.a_ == 4){
-
-                // create alpha and beta lines
-                Line aa = op->lines()[0]; aa.a_ = true;
-                Line ba = op->lines()[1]; ba.a_ = true;
-                Line ia = op->lines()[2]; ia.a_ = true;
-                Line ja = op->lines()[3]; ja.a_ = true;
-
-                Line ab = aa, bb = ba, ib = ia, jb = ja;
-                ab.a_ = false; bb.a_ = false; ib.a_ = false; jb.a_ = false;
-
-
-                // generate the mappings
-                t2abij_map[aa] = aa;
-                t2abij_map[ba] = bb;
-                t2abij_map[ia] = ia;
-                t2abij_map[ja] = jb;
-
-                t2baij_map[aa] = ba;
-                t2baij_map[ba] = ab;
-                t2baij_map[ia] = ia;
-                t2baij_map[ja] = jb;
-            }
-        }
-
-        // create the terms
-        if (!t2abij_map.empty()) {
-            Term abij_term = alpha_term.clone();
-            Term baij_term = alpha_term.clone();
-
-            // replace lines using the maps
-            abij_term.replace_lines(t2abij_map);
-            baij_term.replace_lines(t2baij_map);
-
-            baij_term.coefficient_ *= -1;
-
-            vector<Term> new_terms;// = {abij_term, baij_term, abji_term, baji_term};
-            if (abij_term.is_valid()) new_terms.push_back(abij_term);
-            if (baij_term.is_valid()) new_terms.push_back(baij_term);
-            return new_terms;
-        } else if (alpha_term.is_valid()) {
-            return {alpha_term};
-        } else {
-            return {};
         }
     }
 

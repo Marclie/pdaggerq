@@ -345,6 +345,11 @@ namespace pdaggerq {
          */
         void reorder(bool recompute = false);
 
+        /**
+         * Permute ERI operators in the term to canonical form and swap signs as necessary
+         */
+        void permute_eri();
+
          /**
           * Populate flop and memory scaling maps
           * @param perm permutation of the rhs
@@ -558,13 +563,6 @@ namespace pdaggerq {
          */
         vector<Term> decompose_eri() const;
         vector<Term> density_fitting(); // NEO DF: B[Q,p,q] layout + cross-species g split
-
-        /**
-         * Convert a beta term to an alpha term by changing all lines to alpha or applying permutations from alpha-beta
-         * @return vector of converted terms
-         */
-        vector<Term> convert_beta_to_alpha() const;
-
 
     }; // end Term class
 

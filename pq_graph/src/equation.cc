@@ -137,6 +137,46 @@ namespace pdaggerq {
 
     }
 
+    void Equation::permute_eri() {
+        for (auto & term : terms_) {
+            term.permute_eri();
+        }
+        collect_scaling(); // collect scaling of equations after permuting eri vertices
+    }
+
+    void Equation::decompose_eri() {
+        vector<Term> new_terms;
+        new_terms.reserve(4 * terms_.size());
+        std::cout << "Decomposing ERIs into 3-index integrals..." << std::endl;
+        for (const auto &term : terms_) {
+            vector<Term> decomposed_eri_terms = term.decompose_eri();
+            new_terms.insert(new_terms.end(), decomposed_eri_terms.begin(), decomposed_eri_terms.end());
+        }
+        terms_ = new_terms;
+    }
+
+    void Equation::density_fitting() {
+        vector<Term> new_terms;
+        new_terms.reserve(4 * terms_.size());
+        std::cout << "Density-fitting ERIs and cross-species integrals..." << std::endl;
+        for (auto &term : terms_) {
+            vector<Term> df_terms = term.density_fitting();
+            new_terms.insert(new_terms.end(), df_terms.begin(), df_terms.end());
+        }
+        terms_ = new_terms;
+    }
+
+    void Equation::expand_perms() {
+        vector<Term> new_terms;
+        new_terms.reserve(4 * terms_.size());
+        std::cout << "Expanding permutations..." << std::endl;
+        for (const auto &term : terms_) {
+            vector<Term> permuted_terms = term.expand_perms();
+            new_terms.insert(new_terms.end(), permuted_terms.begin(), permuted_terms.end());
+        }
+        terms_ = new_terms;
+    }
+
     void Equation::reorder(bool recompute) {
         // reorder rhs in term
         for (auto & term : terms_)

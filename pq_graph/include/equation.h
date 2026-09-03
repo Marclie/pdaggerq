@@ -132,6 +132,26 @@ namespace pdaggerq {
         void reorder(bool recompute = false);
 
         /**
+         * Permute ERI operators in each term to canonical form and swap signs as necessary
+         */
+        void permute_eri();
+
+        /**
+         * Decompose two-electron integrals in every term into 3-index integrals.
+         */
+        void decompose_eri();
+
+        /**
+         * Apply NEO density fitting to the integrals in every term.
+         */
+        void density_fitting();
+
+        /**
+         * Expand the stored permutations in every term.
+         */
+        void expand_perms();
+
+        /**
          * Collect flop and memory scaling of the equation from each term
          * @param regenerate whether to regenerate the scaling for terms
          */

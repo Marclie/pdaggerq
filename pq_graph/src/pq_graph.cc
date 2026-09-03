@@ -631,56 +631,6 @@ namespace pdaggerq {
             terms.push_back(term);
         }
 
-        if (decompose_eri_){
-            vector<Term> new_terms;
-            new_terms.reserve(4*terms.size());
-            std::cout << "Decomposing ERIs into 3-index integrals..." << std::endl;
-            for (const auto &term : terms){
-                vector<Term> decomposed_eri_terms = term.decompose_eri();
-                new_terms.insert(new_terms.end(), decomposed_eri_terms.begin(), decomposed_eri_terms.end());
-            }
-            terms = new_terms;
-        }
-
-        // NEO density fitting: like decompose_eri, but emits B with the auxiliary index
-        // FIRST (B[Q,p,q], the layout the einsums/neocc consumer expects) and also splits
-        // the cross-species electron-nuclear integral g(p,P,q,Q) into an electron and a
-        // nuclear B factor (no exchange term). Kept distinct from master's decompose_eri,
-        // whose B index order and spin filtering differ.
-        if (density_fitting_){
-            vector<Term> new_terms;
-            new_terms.reserve(4*terms.size());
-            std::cout << "Density-fitting ERIs and cross-species integrals..." << std::endl;
-            for (auto &term : terms){
-                vector<Term> df_terms = term.density_fitting();
-                new_terms.insert(new_terms.end(), df_terms.begin(), df_terms.end());
-            }
-            terms = new_terms;
-        }
-
-        bool restricted_spin_ = false; // hard-coded for now. TODO: make an option
-        if (has_blocks && restricted_spin_) {
-            vector<Term> new_terms;
-            new_terms.reserve(4*terms.size());
-            std::cout << "Converting beta blocks to alpha blocks..." << std::endl;
-            for (const auto &term : terms){
-                vector<Term> alpha_terms = term.convert_beta_to_alpha();
-                new_terms.insert(new_terms.end(), alpha_terms.begin(), alpha_terms.end());
-            }
-            terms = new_terms;
-        }
-
-        if (expand_permutations_){
-            vector<Term> new_terms;
-            new_terms.reserve(4*terms.size());
-            std::cout << "Expanding permutations..." << std::endl;
-            for (const auto &term : terms){
-                vector<Term> permuted_terms = term.expand_perms();
-                new_terms.insert(new_terms.end(), permuted_terms.begin(), permuted_terms.end());
-            }
-            terms = new_terms;
-        }
-
         // build equation
         Equation& new_equation = equations_[assigment_name];
         MutableVertexPtr assignment_vertex = terms.back().lhs()->clone();
@@ -692,9 +642,28 @@ namespace pdaggerq {
              new_equation.terms().insert(new_equation.terms().end(), terms.begin(), terms.end());
         else new_equation = Equation(assignment_vertex, terms);
 
+        // apply post-processing steps to the equation
+        if (opt_level_>= 5) // merge redundant terms
+            new_equation.merge_terms(); 
+
+        if (expand_permutations_) // expand permutations of terms in the equation as separate terms
+            new_equation.expand_perms();
+
+        if (Vertex::permute_eri_) // permute two-electron integrals to common order
+            new_equation.permute_eri();
+
+        if (decompose_eri_) // decompose two-electron integrals into cholesky factors
+            new_equation.decompose_eri();
+
+        if (density_fitting_) // decompose two-electron integrals into density-fitting factors
+            new_equation.density_fitting();        
+
+        if (opt_level_>= 5) // merge redundant terms once more
+            new_equation.merge_terms();
+
         // save initial scaling
         new_equation.collect_scaling();
-
+        
         const scaling_map &eq_flop_map_ = new_equation.flop_map();
         const scaling_map &eq_mem_map_  = new_equation.mem_map();
 
@@ -706,6 +675,7 @@ namespace pdaggerq {
 
         build_timer.stop(); // stop timer
         total_timer.stop(); // stop timer
+        
     }
 
     void PQGraph::collect_scaling(bool recompute, bool include_reuse) {
