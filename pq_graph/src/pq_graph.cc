@@ -635,6 +635,12 @@ namespace pdaggerq {
         Equation& new_equation = equations_[assigment_name];
         MutableVertexPtr assignment_vertex = terms.back().lhs()->clone();
 
+        // enforce that assignment vertex is the same for every term in the equation
+        for (auto &term : terms) {
+            term.lhs() = assignment_vertex;
+            term.eq()  = assignment_vertex;
+        }
+
         // do not format assignment vertices as a map
         assignment_vertex->vertex_type_ = '\0'; // prevents printing as a map
 
