@@ -544,13 +544,6 @@ namespace pdaggerq {
     void Vertex::sort(line_vector &lines, bool merge_braket, bool compare_labels) {
         if (lines.empty()) return; // do nothing if rank is zero
 
-        // sort lines by occ/vir status (virs on left, occ on right); sort lines by blocks for same occ/vir (alpha on left, beta on right).
-        // if all these are equal, sort by ASCII ordering of line name
-        if (merge_braket) {
-            std::stable_sort(lines.begin(), lines.end(), line_compare(compare_labels));
-            return;
-        }
-
         // sort the bra and ket lines separately
         size_t n = lines.size();
         line_vector bra, ket, sig, den;
@@ -593,15 +586,19 @@ namespace pdaggerq {
         lines.clear(); // clear lines
         lines.reserve(n); // reserve space for lines
 
-        lines.insert(lines.end(), sig.begin(), sig.end()); // add sig
         lines.insert(lines.end(), bra.begin(), bra.end()); // add bra
         lines.insert(lines.end(), ket.begin(), ket.end()); // add ket
+
+        // sort merged bra and ket lines if requested
+        if (merge_braket) std::stable_sort(lines.begin(), lines.end(), line_compare(compare_labels));
+
+        lines.insert(lines.begin(), sig.begin(), sig.end()); // add sig
         lines.insert(lines.end(), den.begin(), den.end()); // add den
 
     }
 
-    void Vertex::sort() {
-        sort(lines_, false, false); // sort lines without merging brackets and while ignoring labels
+    void Vertex::sort(bool merge_braket, bool compare_labels) {
+        sort(lines_, merge_braket, compare_labels); // sort lines without merging brackets and while ignoring labels
         update_lines(lines_); // set lines
     }
 

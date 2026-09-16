@@ -221,7 +221,7 @@ namespace pdaggerq {
          * @param compare_labels do we compare the labels of the lines when sorting? (default false)
          */
         static void sort(line_vector &lines, bool merge_braket = false, bool compare_labels = true); // static version of sort
-        void sort();
+        void sort(bool merge_braket = false, bool compare_labels = true);
 
         /**
          * get the ovstring of from lines
