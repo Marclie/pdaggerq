@@ -2,6 +2,22 @@ from pdaggerq.numerical.solvers.eomcc import eomcc
 from pdaggerq.numerical.codegen.autogen import eomcc_sigma
 
 
+def _normalize_two_photon_sigma(sigma_func):
+    """Remove the 2! boson projection norm from a two-photon sigma row."""
+
+    def normalized_sigma(self):
+        sigma = sigma_func(self)
+        return {
+            base_name: {
+                spin: tensor / 2.0
+                for spin, tensor in spin_blocks.items()
+            }
+            for base_name, spin_blocks in sigma.items()
+        }
+
+    return normalized_sigma
+
+
 class QED_EOMCCSD_22:
 
     def __init__(self, cc, **kwargs):
@@ -126,6 +142,10 @@ class QED_EOMCCSD_22:
         exec(right_sigma1_2p_func, globals(), local_namespace)
         exec(right_sigma2_2p_func, globals(), local_namespace)
 
+        right_sigma0_2p = _normalize_two_photon_sigma(local_namespace["right_sigma0_2p"])
+        right_sigma1_2p = _normalize_two_photon_sigma(local_namespace["right_sigma1_2p"])
+        right_sigma2_2p = _normalize_two_photon_sigma(local_namespace["right_sigma2_2p"])
+
         # right-hand amplitude dictionaries to pass into the solver
         r0 = {
             'sigma': local_namespace["right_sigma0"]
@@ -158,19 +178,19 @@ class QED_EOMCCSD_22:
         }
         r0_2p = {
             'nph': 2,
-            'sigma': local_namespace["right_sigma0_2p"]
+            'sigma': right_sigma0_2p
         }
         r1_2p = {
             'nph': 2,
             'spaces': ['v', 'o'],
             'spins': [['a', 'a'], ['b', 'b']],
-            'sigma': local_namespace["right_sigma1_2p"]
+            'sigma': right_sigma1_2p
         }
         r2_2p = {
             'nph': 2,
             'spaces': ['vv', 'oo'],
             'spins': [['aa', 'aa'], ['ab', 'ab'], ['bb', 'bb']],
-            'sigma': local_namespace["right_sigma2_2p"]
+            'sigma': right_sigma2_2p
         }
 
         # call solver
@@ -289,6 +309,10 @@ class QED_EOMCCSD_22:
         exec(left_sigma1_2p_func, globals(), local_namespace)
         exec(left_sigma2_2p_func, globals(), local_namespace)
 
+        left_sigma0_2p = _normalize_two_photon_sigma(local_namespace["left_sigma0_2p"])
+        left_sigma1_2p = _normalize_two_photon_sigma(local_namespace["left_sigma1_2p"])
+        left_sigma2_2p = _normalize_two_photon_sigma(local_namespace["left_sigma2_2p"])
+
         # left-hand amplitude dictionaries to pass into the solver
         l0 = {
             'sigma': local_namespace["left_sigma0"]
@@ -321,19 +345,19 @@ class QED_EOMCCSD_22:
         }
         l0_2p = {
             'nph': 2,
-            'sigma': local_namespace["left_sigma0_2p"]
+            'sigma': left_sigma0_2p
         }
         l1_2p = {
             'nph': 2,
             'spaces': ['v', 'o'],
             'spins': [['a', 'a'], ['b', 'b']],
-            'sigma': local_namespace["left_sigma1_2p"]
+            'sigma': left_sigma1_2p
         }
         l2_2p = {
             'nph': 2,
             'spaces': ['vv', 'oo'],
             'spins': [['aa', 'aa'], ['ab', 'ab'], ['bb', 'bb']],
-            'sigma': local_namespace["left_sigma2_2p"]
+            'sigma': left_sigma2_2p
         }
 
         # call solver

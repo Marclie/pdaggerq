@@ -643,8 +643,8 @@ def test_ea_eomccsdt_codegen():
 
         f.write(">>> TEST PASSED: EA-EOMCCSDT\n")
 
-@pytest.mark.qed_eomccsd
-def test_qed_eomccsd_codegen():
+@pytest.mark.qed_eomccsd_21
+def test_qed_eomccsd_21_codegen():
 
     with open(LOG_FILE, "a") as f:
         f.write(">>> Running QED-EOMCCSD ...\n")
@@ -840,6 +840,54 @@ def test_qed_eomccsd_codegen():
                 assert np.isclose(en, ref_energies[i] + (-75.016051053904), rtol=1e-10, atol=1e-10)
 
         f.write(">>> TEST PASSED: QED-EOMCCSD\n")    
+
+@pytest.mark.qed_eomccsd_22
+def test_qed_eomccsd_22_codegen():
+
+    with open(LOG_FILE, "a") as f:
+        f.write(">>> Running QED-EOMCCSD ...\n")
+
+        with contextlib.redirect_stdout(f):
+
+            # QED-CCSD-22
+
+            from pdaggerq.numerical.methods.qed_ccsd_22 import QED_CCSD_22 as CC
+            mol, wfn = setup_test()
+            mycc = CC(wfn, 
+                mol, 
+                nfzc=0, 
+                e_convergence = 1e-10,
+                r_convergence = 1e-10,
+                pq_graph_options = pq_graph_options,
+                cavity_lambda = [0, 0, 0.05], 
+                cavity_frequency = 0.564371758730 # cavity-free bright z
+            )
+            en = mycc.t_solver()
+            assert np.isclose(en, -75.016052612406625, rtol=1e-6, atol=1e-6)
+
+            # QED-EOMCCSD-22
+
+            from pdaggerq.numerical.methods.qed_eomccsd_22 import QED_EOMCCSD_22 as EOMCC
+            eomcc = EOMCC(mycc.cc_solver, nstates = 10, pq_graph_options = pq_graph_options)
+
+            eomcc.right_solver()
+
+            ref_energies = [0.0000000000000,
+                0.3564904852048,
+                0.4127589240169,
+                0.4578067387389,
+                0.4581254958828,
+                0.4937166955402,
+                0.5319389689219,
+                0.5520941802757,
+                0.5752756810344,
+                0.6397696408883
+            ]
+            assert np.allclose(ref_energies, eomcc.eomcc_energy, rtol=1e-6, atol=1e-6)
+
+            eomcc.left_solver()
+
+            assert np.allclose(ref_energies, eomcc.eomcc_energy, rtol=1e-6, atol=1e-6)
 
 @pytest.mark.dip_eomccsd
 def test_dip_eomccsd_codegen():

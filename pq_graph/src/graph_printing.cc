@@ -860,7 +860,7 @@ namespace pdaggerq {
                     interm_vertex = make_shared<Vertex>(Vertex::printer_->scratch_prefix(), verts[0]->lines());
 
                 // sort the intermediate vertex to maintain a consistent order
-                interm_vertex->sort(true, true);
+                interm_vertex->sort();
 
                 // Get count for this shape from the shape_map and increment it to keep unique identifiers for each shape
                 string dimstring = interm_vertex->dimstring();
