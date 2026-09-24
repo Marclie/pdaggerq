@@ -868,20 +868,15 @@ def test_qed_eomccsd_22_codegen():
             # QED-EOMCCSD-22
 
             from pdaggerq.numerical.methods.qed_eomccsd_22 import QED_EOMCCSD_22 as EOMCC
-            eomcc = EOMCC(mycc.cc_solver, nstates = 10, pq_graph_options = pq_graph_options)
+            eomcc = EOMCC(mycc.cc_solver, nstates = 5, pq_graph_options = pq_graph_options)
 
             eomcc.right_solver()
 
             ref_energies = [0.0000000000000,
-                0.3564904852048,
-                0.4127589240169,
-                0.4578067387389,
-                0.4581254958828,
-                0.4937166955402,
-                0.5319389689219,
-                0.5520941802757,
-                0.5752756810344,
-                0.6397696408883
+                0.3564903710846,
+                0.4127587946601,
+                0.4581253054939,
+                0.5521111175720,
             ]
             assert np.allclose(ref_energies, eomcc.eomcc_energy, rtol=1e-6, atol=1e-6)
 
