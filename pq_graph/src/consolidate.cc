@@ -82,33 +82,46 @@ size_t PQGraph::prune(bool keep_single_use) {
 
         auto [tmp_decl_terms, terms] = terms_pair;
 
-	    // remove (regardless of use) if never declared
+        // remove (regardless of use) if never declared
         if (!tmp_decl_terms.empty()) {
 
             // count number of occurrences of the temp in the terms
             Term *used_term = nullptr;
             size_t num_occurrences = 0;
+            bool used_in_eq = false;
             for (auto &term: terms) {
                 if (term->lhs() == nullptr) continue; // skip if term has no lhs (will be removed later)
+		size_t term_occurrences = 0;
                 for (auto &vertex: term->rhs()) {
-                    num_occurrences += as_link(vertex)->count(temp, false);
+                    term_occurrences += as_link(vertex)->count(temp, false);
                 }
-                used_term = term;
+		num_occurrences += term_occurrences;
+		if (term_occurrences > 0) {
+                    used_term = term;
+		    used_in_eq = used_in_eq || term->lhs()->type() != temp->type(); // check if used in a different equation
+		}
             }
 
-            // skip if temp is used at least once
-            if (num_occurrences > 1) continue;
-            else if (num_occurrences == 1) {
-                // skip if temp is used only once and we want to keep single use temps
-                if (keep_single_use) continue;
+            // we will remove the temp if it is not used in any term
+            // if the temp is used in only one term we may consider removing it
+            bool keep_temp = num_occurrences >= 1;
+            if (num_occurrences == 1) {
+                // mark for removal if used only once, unless we want to keep single use temps
+                keep_temp = keep_single_use; 
 
-                // we always keep scalars if they are used in an equation
-                if (temp->is_scalar() && used_term && !used_term->lhs()->is_scalar()) continue;
+                // we always keep scalars if they are used in a different equation
+                if (temp->is_scalar() && used_in_eq) keep_temp = true;
 
-                // we keep reused temps if it is used in an equation
-                if (temp->is_reused() && used_term && !used_term->lhs()->is_reused()) continue;
-
+                // we keep reused temps if it is used in a different equation
+                if (temp->is_reused() && used_in_eq) keep_temp = true;
             }
+            //else if (num_occurrences > 1) {
+            //    // if the temp is used more than once, we will not remove it as long as it is actually used in different equations
+            //    keep_temp = used_in_eq;
+            //}
+
+            // if we have determined that the temp should not be removed, skip it
+            if (keep_temp) continue;
         }
 
         num_removed++;

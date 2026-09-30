@@ -251,7 +251,7 @@ void PQGraph::substitute(bool format_sigma, bool only_scalars) {
         bool print_progress = n_linkages > 2000;
 
         if (print_progress)
-            cout << "PROGRESS:" << endl;
+            cout << "PROGRESS [";
 
         /**
          * Iterate over all linkages in parallel and test if they can be substituted into the equations.
@@ -356,12 +356,12 @@ void PQGraph::substitute(bool format_sigma, bool only_scalars) {
             }
 
             if (print_progress && i % print_ratio == 0) {
-                printf("  %2.1lf%%", (double) i / (double) n_linkages * 100);
+                printf("=");
                 std::fflush(stdout);
             }
 
         } // end iterations over all linkages
-        if (print_progress) std::cout << "  Done" << std::endl << std::endl;
+        if (print_progress) std::cout << "]  Done" << std::endl << std::endl;
 
         // merge thread-local ignore sets into the shared ignore set (serial, no contention)
         for (auto &local : local_ignores) {
@@ -590,7 +590,11 @@ void PQGraph::substitute(bool format_sigma, bool only_scalars) {
                 }
             }
 
-            prune();
+
+	    static size_t prune_count = 0;
+	    bool keep_single_use = ++prune_count % 5 != 0; // remove single-use intermediates every 5th prune
+            prune(keep_single_use);  
+	    reindex();
 
             // gradually increase max depth if we have not found any linkages (start from lowest depth; only if batching)
             while (test_linkages.empty()) {
